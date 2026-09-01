@@ -217,6 +217,27 @@ export const schema = {
             },
             additionalProperties: false,
           },
+          {
+            // Unconditional match: `match_all` is mutually exclusive with `match`/`not_match`.
+            type: 'object',
+            required: ['action', 'scope', 'match_all'],
+            properties: {
+              action: {
+                type: 'object',
+                anyOf: [BlockAction, AllowAction, LogAction, RedirectAction],
+              },
+              match_all: {
+                // Schema only permits `true`; omit the property instead of sending `false`.
+                type: 'boolean',
+                enum: [true],
+              },
+              scope: {
+                enum: ['management', 'authentication', 'tenant'],
+                type: 'string',
+              },
+            },
+            additionalProperties: false,
+          },
         ],
       },
     },
