@@ -11,6 +11,13 @@ import { Client } from './clients';
 import { Connection } from './connections';
 import { ClientGrant } from './clientGrants';
 
+// The auth0 SDK's ManagementError exposes the API error code on `err.body.errorCode`,
+// not `err.errorCode`. Some tenants also surface `feature_not_enabled` as a 400 rather
+// than a 403, so we match on the error code regardless of the HTTP status.
+function isFeatureNotEnabled(err): boolean {
+  return err?.statusCode === 403 || err?.body?.errorCode === 'feature_not_enabled';
+}
+
 export const schema = {
   type: 'array',
   items: {
@@ -842,7 +849,7 @@ export default class OrganizationsHandler extends DefaultHandler {
       if (err.statusCode === 404 || err.statusCode === 501) {
         return null;
       }
-      if (err.statusCode === 403 || err.errorCode === 'feature_not_enabled') {
+      if (isFeatureNotEnabled(err)) {
         log.debug(
           'Organization Discovery domains are not enabled for this tenant. Please verify `scope` or contact Auth0 support to enable this feature.'
         );
@@ -933,7 +940,7 @@ export default class OrganizationsHandler extends DefaultHandler {
       if (err.statusCode === 404 || err.statusCode === 501) {
         return null;
       }
-      if (err.statusCode === 403 || err.errorCode === 'feature_not_enabled') {
+      if (isFeatureNotEnabled(err)) {
         log.debug(
           'Org-to-app entitlement is not enabled for this tenant. Skipping org-client associations.'
         );
